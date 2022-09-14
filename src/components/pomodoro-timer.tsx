@@ -1,9 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { useInterval } from '../hooks/use-interval';
-import secondsToTime from '../utils/seconds-to-time';
+// import secondsToTime from '../utils/seconds-to-time';
 import Button from './button';
 import Timer from './timer';
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const bellStart = require('../assets/sounds/src_sounds_bell-start.mp3');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const bellFinish = require('../assets/sounds/src_sounds_bell-finish.mp3');
+
+const audioStartWorking = new Audio(bellStart);
+const audioStopWorking = new Audio(bellFinish);
 interface Props {
   pomodoroTimer: number;
   shortRestTimer: number;
@@ -16,11 +23,13 @@ export function PomodoroTimer(props: Props): JSX.Element {
   const [timeCounting, setTimeCounting] = useState(false);
   const [working, setWorking] = useState(false);
   const [resting, setResting] = useState(false);
+  const [cyclesQtdManager, setCyclesQtdManager] = useState(
+    new Array(props.cycles - 1).fill(true),
+  );
 
-  useEffect(() => {
-    if (working) document.body.classList.add('working');
-    if (resting) document.body.classList.remove('working');
-  }, [working]);
+  const [completedCycles, setCompletedCycles] = useState(0);
+  const [fullWorkingTime, setFullWorkingTime] = useState(0);
+  const [numberOfPomodoros, setNumberOfPomodoros] = useState(0);
 
   useInterval(
     () => {
@@ -34,6 +43,8 @@ export function PomodoroTimer(props: Props): JSX.Element {
     setWorking(true);
     setResting(false);
     setMainTimer(props.pomodoroTimer);
+
+    audioStartWorking.play();
   };
 
   const configureRest = (long: boolean) => {
@@ -46,7 +57,24 @@ export function PomodoroTimer(props: Props): JSX.Element {
     } else {
       setMainTimer(props.shortRestTimer);
     }
+
+    audioStopWorking.play();
   };
+
+  useEffect(() => {
+    if (working) document.body.classList.add('working');
+    if (resting) document.body.classList.remove('working');
+
+    if (mainTimer > 0) return;
+
+    if (working && cyclesQtdManager.length > 0) {
+      configureRest(false);
+      cyclesQtdManager.pop();
+    } else if (working && cyclesQtdManager.length <= 0) {
+      configureRest(false);
+      setCyclesQtdManager(new Array(props.cycles - 1).fill(true));
+    }
+  }, [working, resting]);
 
   return (
     <div className="pomodoro">
