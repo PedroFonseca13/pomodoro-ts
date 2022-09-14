@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useInterval } from '../hooks/use-interval';
-// import secondsToTime from '../utils/seconds-to-time';
+import secondsToTime from '../utils/seconds-to-time';
 import Button from './button';
 import Timer from './timer';
 
@@ -71,10 +71,24 @@ export function PomodoroTimer(props: Props): JSX.Element {
       configureRest(false);
       cyclesQtdManager.pop();
     } else if (working && cyclesQtdManager.length <= 0) {
-      configureRest(false);
+      configureRest(true);
       setCyclesQtdManager(new Array(props.cycles - 1).fill(true));
+      setCompletedCycles(completedCycles + 1);
     }
-  }, [working, resting]);
+
+    if (working) setNumberOfPomodoros(numberOfPomodoros + 1);
+    if (resting) configureWork();
+  }, [
+    working,
+    resting,
+    mainTimer,
+    cyclesQtdManager,
+    numberOfPomodoros,
+    completedCycles,
+    configureRest,
+    setCyclesQtdManager,
+    configureWork,
+  ]);
 
   return (
     <div className="pomodoro">
@@ -91,7 +105,9 @@ export function PomodoroTimer(props: Props): JSX.Element {
         ></Button>
       </div>
       <div className="details">
-        <p>Pedro Henrique Fonseca</p>
+        <p>Completed cycles: {completedCycles}</p>
+        <p>Worked hours: {secondsToTime(fullWorkingTime)}</p>
+        <p>completed Pomodoros: {numberOfPomodoros}</p>
       </div>
     </div>
   );
